@@ -1,0 +1,29 @@
+{
+  "model_a_mortality": {
+    "model": "cervical_mortality_rate ~ socioeconomic determinants + HPVc",
+    "n_rows": 598,
+    "n_countries": 73,
+    "cv": "GroupKFold(5) by country",
+    "rf_r2_grouped": 0.24702856092274184,
+    "rf_mae_grouped": 1.838295026741714,
+    "rf_rmse_grouped": 3.110515543883274,
+    "rf_r2_leaky_reference": 0.7476397605440419,
+    "leakage_inflation": 0.5006111996213001,
+    "linear_r2_grouped": 0.35889458105577055,
+    "shap_base_value": 4.064624163705318,
+    "shap_additivity_max_error": 2.5934809855243657e-13,
+    "shap_perm_rank_corr": 0.9642857142857145
+  },
+  "model_b_coverage_null": {
+    "model": "HPVc_Females ~ socioeconomic determinants",
+    "n_rows": 1129,
+    "n_countries": 141,
+    "rf_r2_grouped": -0.2672907812719596,
+    "rf_r2_country_level": -0.08778736389828445,
+    "rf_r2_leaky_reference": 0.5987876546253934,
+    "leakage_inflation": 0.866078435897353,
+    "auc_ge_30": 0.6426250812215725,
+    "auc_ge_50": 0.6602197802197802,
+    "auc_ge_70": 0.6360066143034312
+  }
+}

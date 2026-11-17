@@ -1,0 +1,62 @@
+XAI PRE-FLIGHT DIAGNOSTICS
+dataset: 1197 country-years, 144 countries, 2010-2024
+
+==========================================================================
+1. REPRODUCING THE PAPER'S REPORTED CORRELATIONS
+==========================================================================
+Paper reports (Spearman, vs HPVc): health exp +0.48, fertility -0.45,
+female education 'stronger positive'.
+
+subset                       health   femedu     fert  internet   n
+full panel (all years)        +0.17    +0.06    -0.06     +0.18   1129
+cross-section 2019            +0.23    +0.07    -0.03     +0.23   89
+cross-section 2022            +0.42    +0.30    -0.30     +0.39   117
+cross-section 2024            -0.00    -0.09    -0.02     +0.05   140
+country means                 +0.16    +0.07    -0.03     +0.12   141
+
+>> Only the 2022 cross-section approaches the published values.
+>> The full panel and 2024 show essentially no association.
+
+==========================================================================
+2. PSEUDO-REPLICATION: WHY PANEL CV IS MISLEADING
+==========================================================================
+  random CV over 1,197 country-years  R2 = +0.600   <- same country in
+                                                      train AND test folds
+  country-level CV (one row/country)  R2 = -0.085   <- honest
+
+>> The panel design inflates R2 by 0.68. The model is
+>> memorising country identity, not learning from the determinants.
+
+==========================================================================
+3. WHERE IS THERE ACTUAL SIGNAL? (all honest, country-level CV)
+==========================================================================
+target                                            score     n  verdict
+--------------------------------------------------------------------------
+HPVc coverage, country means                R2 = -0.088   141  NO SIGNAL
+HPVc coverage, latest year                  R2 = +0.022   141  NO SIGNAL
+dropout (HPV1 - HPVc)                       R2 = -0.245   140  NO SIGNAL
+HPVc >= 30% (classification)                AUC = 0.643   141  weak
+HPVc >= 50% (classification)                AUC = 0.660   141  weak
+HPVc >= 70% (classification)                AUC = 0.636   141  weak
+cervical mortality ~ socioecon              R2 = +0.235    73  USABLE
+cervical mortality ~ socioecon + HPVc       R2 = +0.252    73  USABLE
+
+>> Coverage is NOT predictable from socioeconomic determinants.
+>> Cervical mortality IS moderately predictable from the same variables.
+
+Spearman correlations with cervical mortality (coherent and strong):
+    health_exp_per_capita          -0.703
+    female_secondary_edu_pct       -0.405
+    fertility_rate                 +0.361
+    internet_users_pct             -0.651
+    urban_pop_pct                  -0.499
+    inc                            -0.456
+    HPVc_Females                   -0.299
+
+==========================================================================
+CONCLUSION
+==========================================================================
+Applying SHAP to an HPVc-coverage model would explain noise: the model
+has no out-of-sample skill. Valid options are (a) report the negative
+result as a finding, and/or (b) apply XAI to cervical-cancer mortality,
+where the same determinants do carry signal.
