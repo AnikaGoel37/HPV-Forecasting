@@ -71,6 +71,30 @@ plt.rcParams.update({
     "grid.linestyle": "--"
 })
 
+# Readable names for raw column names shown on charts
+LABELS = {
+    "HPV1_Females": "HPV1 coverage (%)",
+    "HPVc_Females": "HPVc coverage (%)",
+    "health_exp_per_capita": "Health expenditure per capita (USD)",
+    "female_secondary_edu_pct": "Female secondary education (%)",
+    "internet_users_pct": "Internet users (%)",
+    "fertility_rate": "Fertility rate (births/woman)",
+    "year": "Year",
+}
+
+
+def readable(fig):
+    """Larger fonts so charts stay legible in screenshots and on small screens."""
+    fig.for_each_trace(lambda t: t.update(name=LABELS.get(t.name, t.name)))
+    fig.update_layout(
+        font=dict(size=15),
+        title_font=dict(size=18),
+        legend=dict(font=dict(size=14), title_font=dict(size=14)),
+    )
+    fig.update_xaxes(title_font=dict(size=16), tickfont=dict(size=14))
+    fig.update_yaxes(title_font=dict(size=16), tickfont=dict(size=14))
+    return fig
+
 # --------------------------- Ribbon helper ---------------------------
 ribbon_path = os.path.join(project_root, "assets", "cervical_ribbon.png")
 
@@ -256,7 +280,7 @@ with tab_forecast:
                     annotation_text="WHO 90% Target",
                 )
                 fig.update_yaxes(range=[0, 100])
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(readable(fig), use_container_width=True)
             else:
                 st.warning("Forecast dataset for this country lacks 'observed_HPVc' and 'forecast_HPVc' columns.")
 
@@ -280,9 +304,10 @@ with tab_overview:
             x="year",
             y=["HPV1_Females", "HPVc_Females"],
             color_discrete_map={"HPV1_Females": colors["HPV1"], "HPVc_Females": colors["HPVc"]},
+            labels={"value": "Global mean coverage (%)", "year": "Year", "variable": "Dose"},
         )
         fig.update_yaxes(range=[0, 100])
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(readable(fig), use_container_width=True)
     else:
         st.warning("HPV1_Females or HPVc_Females columns not found in observed dataset.")
 
@@ -300,12 +325,12 @@ with tab_overview:
                 color_discrete_map={"HPV1_Females": colors["HPV1"], "HPVc_Females": colors["HPVc"]},
             )
             fig2.update_yaxes(range=[0, 100])
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(readable(fig2), use_container_width=True)
 
             c_data = c_data.copy()
             c_data["dropout"] = c_data["HPV1_Females"] - c_data["HPVc_Females"]
             fig3 = px.line(c_data, x="year", y="dropout", color_discrete_sequence=[colors["Dropout"]])
-            st.plotly_chart(fig3, use_container_width=True)
+            st.plotly_chart(readable(fig3), use_container_width=True)
         else:
             st.warning("Insufficient HPV series for this country in observed dataset.")
     else:
@@ -328,8 +353,14 @@ with tab_corr:
     if len(existing_cols) >= 2:
         corr_data = hpv[existing_cols].dropna()
         corr = corr_data.corr(method="spearman")
-        fig, ax = plt.subplots(figsize=(8, 6))
-        sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
+        corr = corr.rename(index=LABELS, columns=LABELS)
+        fig, ax = plt.subplots(figsize=(10, 7.5))
+        sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", vmin=-1, vmax=1,
+                    annot_kws={"size": 13}, linewidths=0.5, ax=ax)
+        ax.grid(False)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+        fig.tight_layout()  # keeps the bottom row and column labels inside the image
         st.pyplot(fig)
 
         st.subheader("Scatter Plots")
@@ -344,16 +375,18 @@ with tab_corr:
             if c in hpv.columns
         ]
         if factor_options:
-            factor = st.selectbox("Select Factor", factor_options)
+            factor = st.selectbox("Select Factor", factor_options,
+                                  format_func=lambda c: LABELS.get(c, c))
             fig2 = px.scatter(
                 hpv,
                 x=factor,
                 y="HPVc_Females" if "HPVc_Females" in hpv.columns else None,
                 color="Income group" if "Income group" in hpv.columns else None,
                 trendline="ols",
-                title=f"HPVc vs {factor}",
+                title=f"HPVc coverage vs {LABELS.get(factor, factor)}",
+                labels=LABELS,
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(readable(fig2), use_container_width=True)
         else:
             st.info("No factor columns available for scatter plots.")
     else:
@@ -378,7 +411,7 @@ with tab_impact:
                 hover_name="country" if "country" in merged.columns else None,
                 trendline="ols",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(readable(fig), use_container_width=True)
 
             latest_cervical = merged[merged["year"] == latest_year]
             if not latest_cervical.empty:
@@ -394,7 +427,7 @@ with tab_impact:
                     ],
                     title=f"Cervical Cancer Mortality in {latest_year}",
                 )
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(readable(fig2), use_container_width=True)
             else:
                 st.info("No cervical mortality data for the latest year to map.")
         else:
@@ -412,7 +445,7 @@ with tab_region:
         )
         fig = px.line(income_trend, x="year", y="HPVc_Females", color="Income group")
         fig.update_yaxes(range=[0, 100])
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(readable(fig), use_container_width=True)
     else:
         st.warning("Income group or HPVc_Females column missing for income group comparisons.")
 
@@ -420,7 +453,7 @@ with tab_region:
         region_trend = hpv.groupby(["year", "region"])[["HPVc_Females"]].mean().reset_index()
         fig2 = px.line(region_trend, x="year", y="HPVc_Females", color="region")
         fig2.update_yaxes(range=[0, 100])
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(readable(fig2), use_container_width=True)
 
         st.subheader("Dropout Heatmap by Region")
         hpv_copy = hpv.copy()
