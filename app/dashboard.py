@@ -175,7 +175,7 @@ h1, h2, h3, h4 {
 # --------------------------- Header + Tabs ---------------------------
 col_l, col_r = st.columns([0.86, 0.14])
 with col_l:
-    st.markdown('<div class="page-title">HPV ForestX: Country Level Forcasting and Insights</div>',
+    st.markdown('<div class="page-title">HPV ForestX: Country Level Forecasting and Insights</div>',
                 unsafe_allow_html=True)
 
 with col_r:
